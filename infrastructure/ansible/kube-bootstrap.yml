@@ -1,0 +1,106 @@
+- hosts: 
+    - master
+  become: yes
+  vars:
+    flannel_url: https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    flannel_definition: "{{ lookup('url', flannel_url, split_lines=False) }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  tasks:
+    - name: Check if we're inside vagrant
+      stat:
+        path: /home/vagrant
+      register: vagrant_stat
+
+    - name: Set bootstrap args if needed
+      set_fact:
+        bootstrap_args: "--apiserver-advertise-address={{ ansible_eth1.ipv4.address | default ('',true) }}"
+      when: vagrant_stat.stat.exists
+
+    - name: Bootstrap control plane (This can take a few minutes...)
+      shell:
+        cmd: "kubeadm init --pod-network-cidr=10.244.0.0/16 {{ bootstrap_args | default ('',true) }}"
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Fix permissions on kubernetes conf
+      file:
+        path: /etc/kubernetes/admin.conf
+        mode: "0644"
+
+    - name: Register join command
+      shell:
+        cmd: "kubeadm token create --print-join-command"
+      register: join_cmd_output
+
+    - name: Store join command
+      set_fact:
+        join_cmd: "{{ join_cmd_output.stdout }}"
+      delegate_facts: true
+      delegate_to: localhost
+
+    - name: Show join command
+      debug:
+        var: join_cmd_output.stdout
+
+    - name: Permit execution on master
+      shell:
+        cmd: "kubectl taint nodes --all node-role.kubernetes.io/master-"
+      failed_when: false
+
+    - name: Install flannel
+      kubernetes.core.k8s:
+        definition: "{{ flannel_definition }}"
+        state: present
+
+    - name: Patch flannel to use eth1 on vagrant
+      k8s:
+        definition:
+          apiVersion: apps/v1
+          kind: DaemonSet
+          metadata:
+            name: kube-flannel-ds
+            namespace: kube-system
+          spec:
+            template:
+              spec:
+                containers:
+                - args:
+                  - --ip-masq
+                  - --kube-subnet-mgr
+                  - --iface=eth1
+                  name: kube-flannel
+        state: present
+      when: vagrant_stat.stat.exists
+
+- hosts: 
+    - all,!master
+  become: yes
+  tasks:
+    - name: Join cluster
+      shell:
+        cmd: "{{ hostvars['localhost'].join_cmd }}"
+        creates: /etc/kubernetes/pki/ca.crt
+      ignore_errors: yes
+
+- hosts: 
+    - master
+  become: yes
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  tasks:
+    - name: Wait for cluster to be fully active
+      shell:
+        cmd: "kubectl get nodes |grep -v NotReady |grep Ready |wc -l"
+      register: cmd_ready
+      retries: 10
+      delay: 10
+      until: cmd_ready.stdout | string == nodes | string
+      changed_when: false
+
+    - name: Get cluster status
+      shell: "kubectl get nodes"
+      register: cluster_status
+
+    - name: Display cluster status
+      debug:
+        var: cluster_status.stdout_lines

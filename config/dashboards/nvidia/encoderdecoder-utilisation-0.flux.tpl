@@ -1,0 +1,7 @@
+from(bucket: "nebula")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "nvidia_smi")
+  |> filter(fn: (r) => r["_field"] == "utilization_decoder" or r["_field"] == "utilization_encoder")
+  |> group(columns: ["_field"])
+  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+  |> yield(name: "mean")

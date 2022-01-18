@@ -1,0 +1,8 @@
+from(bucket: "nebula")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "sensors")
+  |> filter(fn: (r) => r["_field"] == "temp_input")
+  |> filter(fn: (r) => r["host"] == "nebula")
+  |> filter(fn: (r) => r["chip"] == "k10temp-pci-00c3")
+  |> filter(fn: (r) => r["feature"] == "tctl")
+  |> last()

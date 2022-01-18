@@ -1,0 +1,8 @@
+from(bucket: "nebula")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "nvidia_smi")
+  |> filter(fn: (r) => r["_field"] == "utilization_memory")
+  |> aggregateWindow(every: v.windowPeriod, fn: first, createEmpty: true)
+  |> keep(columns: ["_time", "_value", "_start", "_stop", "_measurement"])
+  |> sort(columns: ["_time"], desc: false)
+  |> yield(name: "first")

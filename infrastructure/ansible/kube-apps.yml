@@ -1,0 +1,169 @@
+---
+- hosts:
+    - all
+  become: yes
+  tasks:
+    - name: Get node IPs
+      set_fact:
+        cluster_nodes: "{{  play_hosts | map('extract',hostvars) | selectattr('inventory_hostname') | map(attribute='ansible_eth1.ipv4.address') | list }}"
+      delegate_facts: true
+      delegate_to: localhost
+      run_once: yes
+
+- hosts:
+    - master
+  become: yes
+  vars:
+    nginx_url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.0/deploy/static/provider/baremetal/deploy.yaml
+    nginx_definition: "{{ lookup('url', nginx_url, split_lines=False) }}"
+    dashboard_helm_repo: https://kubernetes.github.io/dashboard/
+    nfs_subdir_external_provisioner_helm_repo: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+  environment:
+    KUBECONFIG: "/etc/kubernetes/admin.conf"
+  tasks:
+    - name: Install helm
+      shell:
+        cmd: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+        creates: /usr/local/bin/helm
+      args:
+        warn: false
+
+    - name: Install helm-diff plugin
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/databus23/helm-diff
+        state: present
+
+    - name: Install nginx ingress
+      kubernetes.core.k8s:
+        definition: "{{ nginx_definition }}"
+        state: present
+
+    - name: Patch nginx ingress to present on cluster node IPs
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ingress-nginx-controller
+            namespace: ingress-nginx
+          spec:
+            externalIPs: "{{ hostvars['localhost'].cluster_nodes }}"
+        state: present
+
+    - name: Wait for nginx ingress controller (This may take some time)
+      shell:
+        cmd: "kubectl -n ingress-nginx get pods |grep ingress-nginx-controller |grep Running | wc -l"
+      retries: 10
+      delay: 10
+      register: nginx_ready
+      until: nginx_ready.stdout == "1"
+      changed_when: false
+
+    - name: Install kubernetes dashboard helm repo
+      kubernetes.core.helm_repository:
+        name: kubernetes-dashboard
+        repo_url: "{{ dashboard_helm_repo }}"
+
+    - name: Deploy dashboard helm chart
+      kubernetes.core.helm:
+        name: kubernetes-dashboard
+        chart_ref: kubernetes-dashboard/kubernetes-dashboard
+        release_namespace: default
+        wait: yes
+        values:
+          extraArgs:
+            - --token-ttl=86400
+          metrics-server:
+            enabled: true
+            args:
+              - --kubelet-insecure-tls
+          metricsScraper:
+            enabled: true
+
+    - name: Install dashboard ingress
+      kubernetes.core.k8s:
+        namespace: default
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: dashboard-ingress
+            annotations:
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+          spec:
+            ingressClassName: nginx
+            rules:
+              - host: "cluster.{{ domain }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: ImplementationSpecific
+                      backend:
+                        service:
+                          name: kubernetes-dashboard
+                          port:
+                            number: 443
+        state: present
+
+    - name: Create dashboard service account
+      kubernetes.core.k8s:
+        kind: serviceaccount
+        name: dashboard-admin-sa
+        namespace: default
+        state: present
+
+    - name: Create dashboard cluster role binding
+      kubernetes.core.k8s:
+        name: dashboard-admin-sa
+        kind: ClusterRoleBinding
+        namespace: default
+        definition:
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: cluster-admin
+          subjects:
+            - kind: ServiceAccount
+              name: dashboard-admin-sa
+              namespace: default
+        state: present
+
+    - name: Install nfs-subdir-external-provisioner helm repo
+      kubernetes.core.helm_repository:
+        name: nfs-subdir-external-provisioner
+        repo_url: "{{ nfs_subdir_external_provisioner_helm_repo }}"
+
+    - name: Deploy nfs-subdir-external-provisioner helm chart
+      kubernetes.core.helm:
+        name: nfs-subdir-external-provisioner
+        chart_ref: nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
+        release_namespace: default
+        wait: yes
+        values:
+          nfs:
+            server: "{{ nfs_server }}"
+            path: "{{ nfs_path }}"
+      #when: false
+
+    - name: Get FQDN hostname
+      shell:
+        cmd: "hostname -f"
+      register: hostname
+      changed_when: false
+
+    - name: Get dashboard token
+      shell:
+        cmd: "kubectl describe secret $(kubectl get secrets|grep dashboard-admin-sa-token|awk '{print $1}') |grep token: | awk '{print $2}'"
+      register: dashboard_token
+      changed_when: false
+
+    - name: Display dashboard URL
+      debug:
+        msg:
+          -  "Dashboard at https://cluster.{{ domain }}"
+          -  "To get kubeconfig:"
+          -  "vagrant ssh {{ inventory_hostname }} -c 'cat /etc/kubernetes/admin.conf' > ~/.kube/config"
+
+    - name: Display dashboard token
+      debug:
+        var: dashboard_token.stdout

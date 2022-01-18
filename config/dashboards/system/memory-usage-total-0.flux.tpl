@@ -1,0 +1,7 @@
+from(bucket: "nebula")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "mem")
+  |> filter(fn: (r) => r["_field"] == "active" or r["_field"] == "available" or r["_field"] == "buffered" or r["_field"] == "cached" or r["_field"] == "dirty" or r["_field"] == "free" or r["_field"] == "inactive" or r["_field"] == "mapped" or r["_field"] == "shared" or r["_field"] == "slab" or r["_field"] == "page_tables")
+  |> drop(columns: ["host"])
+  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+  |> yield(name: "mean")

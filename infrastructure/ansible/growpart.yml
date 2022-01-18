@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Increase partition 2 size
+      shell:
+        cmd: growpart /dev/sda 2
+      failed_when: false
+
+    - name: Increase partition 5 size
+      shell:
+        cmd: growpart /dev/sda 5
+      failed_when: false
+
+    - name: Resize pv
+      shell:
+        cmd: pvresize /dev/sda5
+
+    - name: Resize pv
+      shell:
+        cmd: lvextend  -l +100%FREE -r /dev/mapper/vgvagrant-root

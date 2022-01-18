@@ -1,0 +1,104 @@
+#
+unless Vagrant.has_plugin?("vagrant-disksize")
+  raise  Vagrant::Errors::VagrantError.new, "vagrant-disksize plugin is missing. Please install it using 'vagrant plugin install vagrant-disksize', force-clean, and then restart"
+end
+
+# Changec these to suit your network and needs
+nodes = "3"
+basename = "node"
+domainname = "choclab.net"
+nfs_server = "192.168.1.5"
+nfs_path = "/var/lib/vms/nfs"
+bridge_interface = "enp5s0"
+
+# If use_dchp == false,  nodes will be contstructed using network.node1_address onwaards
+use_dhcp = false
+network = "192.168.1"
+node1_address = 10
+
+kubernetes_version =  "1.21.0-00"
+
+nodes = nodes.to_i
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "bento/ubuntu-20.04"
+  config.disksize.size = "100GB"
+
+  config.vm.provider :virtualbox do |v|
+    v.memory = 8192
+    v.cpus = 4
+    v.linked_clone = true
+    v.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
+    v.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+  end
+
+  (1..nodes).each do |n|
+    config.vm.define "#{basename}#{n}.#{domainname}" do |config|
+
+      if (use_dhcp == true)
+        config.vm.network "public_network", bridge: "#{bridge_interface}"
+      else
+        last_octet = node1_address + n -1
+        config.vm.network "public_network", bridge: "#{bridge_interface}" , ip: "#{network}.#{last_octet}"
+      end
+
+      config.vm.provider :virtualbox do |v|
+        v.name = "#{basename}#{n}.#{domainname}"
+      end
+
+      config.vm.hostname = "#{basename}#{n}.#{domainname}"
+
+      if n == nodes
+        # Grow vagrant partition and filesystem
+        config.vm.provision "ansible" do |ansible|
+          ansible.playbook = "ansible/growpart.yml"
+          ansible.limit = "all"
+          ansible.become = true
+        end
+
+        # Install Kubernetes prerequisites
+        config.vm.provision "ansible" do |ansible|
+          ansible.playbook = "ansible/kube-prereqs.yml"
+          ansible.limit = "all"
+          ansible.become = true
+          ansible.extra_vars = {
+            kubernetes_version: "#{kubernetes_version}"
+          }
+        end
+
+        # Install Kubernetes
+        config.vm.provision "ansible" do |ansible|
+          ansible.playbook = "ansible/kube-bootstrap.yml"
+          ansible.groups = {
+            "master" => ["#{basename}1.#{domainname}"],
+            "workers" => ["#{basename}[2:#{nodes}].#{domainname}"],
+          }
+          ansible.extra_vars = {
+            kubernetes_version: "#{kubernetes_version}",
+            nodes: "#{nodes}"
+          }
+          ansible.limit = "all"
+          ansible.become = true
+        end
+
+        # Deploy base apps
+        config.vm.provision "ansible" do |ansible|
+          ansible.playbook = "ansible/kube-apps.yml"
+          ansible.groups = {
+            "master" => ["#{basename}1.#{domainname}"],
+            "workers" => ["#{basename}[2:#{nodes}].#{domainname}"],
+          }
+          ansible.extra_vars = {
+            nodes: "#{nodes}",
+            nfs_server: "#{nfs_server}",
+            nfs_path: "#{nfs_path}",
+            domain: "#{domainname}"
+          }
+          ansible.limit = "all"
+          ansible.become = true
+         end
+      end #nodes
+    end #config
+  end # 1..nodes
+end #config
