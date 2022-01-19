@@ -1,6 +1,6 @@
 resource "sys_file" "system" {
   for_each             = fileset("${path.module}/../../config/", "systemd/system/*.service")
-  content              = file("${path.module}/../../config/${each.key}")
+  content              = templatefile("${path.module}/../../config/${each.key}", { domain = var.domain })
   filename             = "/usr/lib/${each.key}"
   directory_permission = "0755"
   file_permission      = "0644"

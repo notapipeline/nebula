@@ -12,7 +12,7 @@ IgnoreSIGPIPE=no
 KillMode=process
 GuessMainPID=no
 RemainAfterExit=yes
-ExecStart=/usr/bin/VBoxManage startvm %i.choclab.net --type headless
-ExecStop=/usr/bin/VBoxManage controlvm %i.choclab.net acpipowerbutton
+ExecStart=/usr/bin/VBoxManage startvm %i.${domain} --type headless
+ExecStop=/usr/bin/VBoxManage controlvm %i.${domain} acpipowerbutton
 [Install]
 WantedBy=multi-user.target

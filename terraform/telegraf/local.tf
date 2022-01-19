@@ -7,7 +7,11 @@ resource "local_file" "telegraf_d" {
 }
 
 resource "local_file" "telegraf" {
-  content              = file("${path.module}/../../config/telegraf/telegraf.conf")
+  content = templatefile("${path.module}/../../config/telegraf/telegraf.conf", {
+    influx_url   = "https://influx.${var.domain}",
+    organisation = var.organisation,
+    bucket       = var.bucket,
+  })
   filename             = "/etc/telegraf/telegraf.conf"
   directory_permission = "0755"
   file_permission      = "0644"

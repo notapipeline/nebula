@@ -1,5 +1,5 @@
 variable "domain" {
-  description = "The domain to host resources on"
+  description = "The domain used for VM naming"
 }
 
 variable "organisation" {
@@ -10,13 +10,8 @@ variable "bucket" {
   description = "The influxdb organisations primary bucket to write metrics to"
 }
 
-variable "influx_token" {
+variable "token" {
   description = "The token used to authenticate to influxdb"
-  sensitive   = true
-}
-
-variable "nut_password" {
-  description = "The password used to authenticate to NUT UPS monitoring service"
   sensitive   = true
 }
 
