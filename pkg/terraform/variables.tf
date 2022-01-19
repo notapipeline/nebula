@@ -1,3 +1,7 @@
+variable "region" {
+  description = "AWS region used for required resources"
+}
+
 variable "domain" {
   description = "The domain to host resources on"
 }

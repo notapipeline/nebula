@@ -9,7 +9,7 @@ resource "sys_file" "system" {
 resource "sys_systemd_unit" "units" {
   for_each = toset(flatten([
     for key, _ in sys_file.system : length(split("@", basename(key))) == 2 ? [
-      for value in local.services[trimsuffix(basename(key), ".service")] : "${trimsuffix(basename(key), ".service")}${value}"
+      for value in local.services[trimsuffix(basename(key), ".service")] : "${trimsuffix(basename(key), ".service")}${value}.service"
   ] : [basename(key)]]))
   name   = each.key
   enable = true

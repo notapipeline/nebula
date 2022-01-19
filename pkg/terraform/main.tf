@@ -22,3 +22,8 @@ module "nut" {
   domain   = var.domain
   password = var.nut_password
 }
+
+module "kubernetes" {
+  source = "./kubernetes"
+  domain = var.domain
+}

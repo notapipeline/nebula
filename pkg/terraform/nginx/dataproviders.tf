@@ -1,5 +1,7 @@
 data "external" "addresses" {
   program = [
+    "su",
+    "-c",
     "bash",
     "-c",
     <<EOT
@@ -24,5 +26,7 @@ data "external" "addresses" {
   echo '}'
 ) | jq
 EOT
+    ,
+    "mproffitt"
   ]
 }
