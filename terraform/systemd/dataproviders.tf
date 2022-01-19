@@ -8,3 +8,4 @@ array[i], array[i]); if (i < l-1) print ",";}; print "}" }' <<< $(vboxmanage lis
 EOT
   ]
 }
+
