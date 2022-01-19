@@ -1,3 +1,7 @@
-module "nginx" {
-  source = "./nginx"
+module "systemd" {
+  source = "./systemd"
 }
+
+/*module "nginx" {
+  source = "./nginx"
+}*/
