@@ -3,6 +3,10 @@ module "systemd" {
   domain = var.domain
 }
 
-/*module "nginx" {
+module "nginx" {
   source = "./nginx"
-}*/
+}
+
+module "telegraf" {
+  source = "./telegraf"
+}
