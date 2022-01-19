@@ -4,8 +4,9 @@ module "systemd" {
 }
 
 module "nginx" {
-  source = "./nginx"
-  domain = var.domain
+  source   = "./nginx"
+  domain   = var.domain
+  ifdevice = var.ifdevice
 }
 
 module "telegraf" {

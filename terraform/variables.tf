@@ -2,6 +2,10 @@ variable "domain" {
   description = "The domain to host resources on"
 }
 
+variable "ifdevice" {
+  description = "The outbound internet device handling networking for virtualbox images"
+}
+
 variable "organisation" {
   description = "The influxdb organisation to write metrics to"
 }
