@@ -11,6 +11,7 @@ resource "local_file" "telegraf" {
     influx_url   = "https://influx.${var.domain}",
     organisation = var.organisation,
     bucket       = var.bucket,
+    token        = var.token,
   })
   filename             = "/etc/telegraf/telegraf.conf"
   directory_permission = "0755"
