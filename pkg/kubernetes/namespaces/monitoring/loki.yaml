@@ -3,7 +3,7 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: nginx
   hosts:
-    - host: loki.choclab.net
+    - host: "loki.${domain}"
       paths:
         - "/"
 persistence:

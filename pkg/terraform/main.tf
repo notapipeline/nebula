@@ -1,3 +1,10 @@
+module "kubernetes" {
+  source       = "./kubernetes"
+  domain       = var.domain
+  organisation = var.organisation
+  bucket       = var.bucket
+}
+
 module "systemd" {
   source = "./systemd"
   domain = var.domain
@@ -23,7 +30,3 @@ module "nut" {
   password = var.nut_password
 }
 
-module "kubernetes" {
-  source = "./kubernetes"
-  domain = var.domain
-}

@@ -19,7 +19,7 @@ server:
         paths:
           - "/"
     tls:
-      - secretName: choclab-vault-cert
+      - secretName: ${datacentre}-vault-cert
         hosts:
           - vault.${domain}
 
@@ -40,9 +40,9 @@ server:
     - name: consul
       secret:
         secretName: consul
-    - name: choclab-vault-cert
+    - name: ${datacentre}-vault-cert
       secret:
-        secretName: choclab-vault-cert
+        secretName: ${datacentre}-vault-cert
 
   volumeMounts:
      - mountPath: /etc/ssl/consul-cert
@@ -51,8 +51,8 @@ server:
      - mountPath: /etc/ssl/consul
        name: consul
        readOnly: true
-     - mountPath: /etc/ssl/choclab-vault-cert
-       name: choclab-vault-cert
+     - mountPath: /etc/ssl/${datacentre}-vault-cert
+       name: ${datacentre}-vault-cert
        readOnly: true
 
   # Enables network policy for server pods
@@ -86,8 +86,8 @@ server:
 
       listener "tcp" {
         tls_disable = "false"
-        tls_cert_file = "/etc/ssl/choclab-vault-cert/tls.crt"
-        tls_key_file = "/etc/ssl/choclab-vault-cert/tls.key"
+        tls_cert_file = "/etc/ssl/${datacentre}-vault-cert/tls.crt"
+        tls_key_file = "/etc/ssl/${datacentre}-vault-cert/tls.key"
         address = "POD_IP:8200"
         cluster_address = "POD_IP:8201"
       }

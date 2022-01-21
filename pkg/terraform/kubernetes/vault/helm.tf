@@ -1,4 +1,3 @@
-
 resource "helm_release" "consul" {
   name       = "consul"
   repository = "https://helm.releases.hashicorp.com"
@@ -6,7 +5,8 @@ resource "helm_release" "consul" {
   namespace  = var.namespace
   values = [
     templatefile("${path.root}/../kubernetes/namespaces/vault/consul.yaml", {
-      domain = var.domain,
+      domain     = var.domain,
+      datacentre = var.datacentre,
     }),
   ]
 
@@ -24,7 +24,8 @@ resource "helm_release" "vault" {
   namespace  = var.namespace
   values = [
     templatefile("${path.root}/../kubernetes/namespaces/vault/vault.yaml", {
-      domain = var.domain,
+      domain     = var.domain,
+      datacentre = var.datacentre,
     }),
   ]
 

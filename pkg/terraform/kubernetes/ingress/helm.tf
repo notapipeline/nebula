@@ -1,7 +1,7 @@
-resource helm_release nginx {
-  name = "ingress-nginx"
+resource "helm_release" "nginx" {
+  name       = "ingress-nginx"
   repository = "https://kubernetes.github.io/ingress-nginx"
-  chart = "ingress-nginx"
-  values = ["${path.root}/../kubernetes/ingress/nginx.yaml"]:qa
-
+  chart      = "ingress-nginx"
+  namespace  = "ingress-nginx"
+  values     = [file("${path.root}/../kubernetes/namespaces/ingress/nginx.yaml")]
 }

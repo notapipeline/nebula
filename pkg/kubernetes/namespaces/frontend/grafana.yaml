@@ -12,14 +12,11 @@ autoscaling:
         name: memory
         targetAverageUtilization: 60
 
-image:
-  tag: 8.3.3
-
 ingress:
   enabled: true
   ingressClassName: nginx
   hosts:
-    - grafana.choclab.net
+    - "grafana.${domain}"
 
 admin:
   existingSecret: "grafana-admin"
@@ -43,6 +40,6 @@ grafana.ini:
 
   database:
     type: "mysql"
-    host: "nebula.choclab.net:3306"
+    host: "${database_address}:${database_port}"
     name: "grafana"
 

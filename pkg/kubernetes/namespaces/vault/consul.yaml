@@ -1,5 +1,5 @@
 global:
-  datacenter: choclab
+  datacenter: "${datacentre}"
   enablePodSecurityPolicies: true
   gossipEncryption:
     secretName: consul
@@ -19,8 +19,10 @@ global:
     manageSystemACLs: true
   metrics:
     enabled: true
+
 server:
   storageClass: nfs-client
+
 ui:
   enabled: true
   ingress:
@@ -36,8 +38,7 @@ ui:
     tls:
       - hosts:
         - "consul.${domain}"
-        secretName: "choclab-consul-cert"
-  metrics:
-    enabled: "-"
-    provider: "prometheus"
-    baseURL: http://prometheus-server
+        secretName: "${datacentre}-consul-cert"
+
+syncCatalog:
+  enabled: true

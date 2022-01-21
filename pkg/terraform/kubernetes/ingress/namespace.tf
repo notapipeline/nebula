@@ -1,3 +1,5 @@
-resource "kubernetes_namespace" "ingress" {
-  name = "ingress"
+resource "kubernetes_namespace_v1" "ingress" {
+  metadata {
+    name = "ingress-nginx"
+  }
 }
