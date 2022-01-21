@@ -15,13 +15,13 @@ server:
     pathType: Prefix
     activeService: true
     hosts:
-      - host: vault.choclab.net
+      - host: vault.${domain}
         paths:
           - "/"
     tls:
       - secretName: choclab-vault-cert
         hosts:
-          - vault.choclab.net
+          - vault.${domain}
 
 
   extraEnvironmentVars:
@@ -81,7 +81,7 @@ server:
       enabled: false
     config: |
       ui = true
-      api_addr = "https://vault.choclab.net"
+      api_addr = "https://vault.${domain}"
       disable_performance_standby = "false"
 
       listener "tcp" {

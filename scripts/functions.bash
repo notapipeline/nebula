@@ -3,15 +3,6 @@ if [ ! -n "${__COMMON_DEF}" ] ; then
     [ -f 'scripts/common/common-functions.bash' ] && source 'scripts/common/common-functions.bash'
 fi
 
-function cleanup()
-{
-    # prevent the box from terminating if a build is still running.
-    if [ ! -f /var/lock/build.lock ]; then
-        nohup sleep 1 && sudo kill -SIGTERM 1 &>/dev/null &
-    fi
-}
-trap cleanup EXIT
-
 ##
 # Check if an environment has been whitelisted for deployment
 #
