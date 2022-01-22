@@ -1,6 +1,7 @@
 adminUser:
   organization: "${organisation}"
   bucket: "${bucket}"
+  # Should not be applied on first run...
   existingSecret: "influxdb2-auth"
 
 persistence:
