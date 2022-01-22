@@ -13,7 +13,7 @@ module "systemd" {
 module "nginx" {
   source   = "./nginx"
   domain   = var.domain
-  ifdevice = var.ifdevice
+  ifdevice = var.interface
 }
 
 module "telegraf" {
