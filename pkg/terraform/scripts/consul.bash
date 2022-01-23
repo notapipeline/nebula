@@ -14,7 +14,7 @@ if kubectl -n ${namespace} get secrets/${secret} &>/dev/null; then
         [ "${CACERT}" != '' ] && echo ${CACERT} | tr " " "\n" | awk '/BEGIN/ || /END/{printf "%s ",$0;next}7' > ${cacert}
     fi
     if [ ! -f ${cakey} ]; then
-       [ "${CAKEY}" != '' ] && echo ${CAKEY} | tr " " "\n" | awk '/BEGIN/ || /PRIVATE/ || /END/{printf "%s ",$0;next}7' > ${cakey}
+       [ "${CAKEY}" != '' ] && echo ${CAKEY} | tr " " "\n" | awk '/BEGIN/ || /EC/ || /PRIVATE/ || /END/{printf "%s ",$0;next}7' > ${cakey}
     fi
     if [ ! -f ${gossip} ]; then
        [ "${GOSSIP}" ] && echo ${GOSSIP} > ${gossip}
