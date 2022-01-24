@@ -18,6 +18,11 @@ variable "bucket" {
   description = "The influxdb organisations primary bucket to write metrics to"
 }
 
+variable "letsencrypt" {
+  type        = bool
+  description = "Use letsencrypt service for certificates"
+}
+
 variable "influx_token" {
   description = "The token used to authenticate to influxdb"
   sensitive   = true

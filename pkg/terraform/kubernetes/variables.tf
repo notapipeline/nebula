@@ -10,3 +10,7 @@ variable "bucket" {
   description = "The unique name of the data bucket"
 }
 
+variable "letsencrypt" {
+  type        = bool
+  description = "Use letsencrypt service for certificates"
+}

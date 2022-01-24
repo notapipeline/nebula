@@ -24,7 +24,11 @@ fi
 if [ ! -f ${tlscrt} ]; then
     if [ ${letsencrypt} == 0 ]; then
         cp /etc/letsencrypt/archive/${fqdn}/fullchain1.pem ${tlscrt}
-        cp /etc/letsencrypt/archive/${fqdn}/fullchain1.pem ${tlskey}
+        # we cant use fullchain1 if type is not Opaque
+        if [ "${TYPE}" != 'Opaque' ]; then
+            cp /etc/letsencrypt/archive/${fqdn}/cert1.pem ${tlscrt}
+        fi
+        cp /etc/letsencrypt/archive/${fqdn}/privkey1.pem ${tlskey}
     else
         cp /etc/ssl/$(cut -d. -f2- <<<${fqdn})/$(cut -d. -f1 <<<${fqdn}).crt
         cp /etc/ssl/$(cut -d. -f2- <<<${fqdn})/$(cut -d. -f1 <<<${fqdn}).key

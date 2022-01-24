@@ -11,3 +11,7 @@ variable "namespace" {
   default     = "vault"
 }
 
+variable "letsencrypt" {
+  type        = bool
+  description = "Use letsencrypt service for certificates"
+}
